@@ -10,6 +10,8 @@ from utils import APIException, generate_sitemap
 from admin import setup_admin
 from models import db, User, Users, Characters, Planets, FavoriteCharacters, FavoritePlanets
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm.exc import UnmappedInstanceError
 
 # from models import Person
 
@@ -61,6 +63,16 @@ def get_users():
 
     return jsonify(all_users), 200
 
+@app.route('/users/favorites', methods=['GET'])
+def get_users_favorites():
+    favorite_planets = db.session.execute(select(FavoritePlanets)).scalars().all()
+    favorite_planets = list(map(lambda x: x.serialize(), favorite_planets))
+    favorite_characters = db.session.execute(select(FavoriteCharacters)).scalars().all()
+    favorite_characters = list(map(lambda x: x.serialize(), favorite_characters))
+    
+
+    return jsonify(favorite_characters, favorite_planets)
+
 @app.route('/characters', methods=['GET'])
 def get_characters():
     all_characters = db.session.execute(select(Characters)).scalars().all()
@@ -75,15 +87,64 @@ def get_planets():
 
     return jsonify(all_planets), 200
 
-@app.route('/users/favorites', methods=['GET'])
-def get_users_favorites():
-    all_characters_favorites = db.session.execute(select(FavoriteCharacters)).scalars().all()
-    all_characters_favorites= list(map(lambda x: x.serialize(), all_characters_favorites))
+@app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
+def add_favorite_planet(planet_id):
+    
+    planet = FavoritePlanets(id_user=1, id_planets=planet_id, active=True)
+    try:
+        db.session.add(planet)
+        db.session.commit()
 
-    all_planets_favorites = db.session.execute(select(FavoritePlanets)).scalars().all()
-    all_planets_favorites= list(map(lambda x: x.serialize(), all_characters_favorites))
+        return "Planet ADDED to favorites", 201
 
-    return jsonify(all_characters_favorites, all_planets_favorites), 200,
+    except IntegrityError:
+        db.session.rollback()
+        return "Error. This planet is already in your favorites", 400
+
+
+@app.route('/favorite/character/<int:character_id>', methods=['POST'])
+def add_favorite_character(character_id):
+    
+    character = FavoriteCharacters(id_user=1, id_characters=character_id, active=True)
+    try:
+        db.session.add(character)
+        db.session.commit()
+
+        return "Character ADDED to favorites", 201
+
+    except IntegrityError:
+        db.session.rollback()
+        return "Error. This character is already in your favorites", 400
+    
+
+@app.route('/favorite/character/<int:character_id>', methods=['DELETE'])
+def del_favorite_character(character_id):
+    
+    favorites = db.session.get(FavoriteCharacters, character_id)
+    try:
+        db.session.delete(favorites)
+        db.session.commit()
+
+        return "Character DELETED from favorites", 201
+
+    except UnmappedInstanceError:
+        db.session.rollback()
+        return "Error. This character is already DELETED", 401
+
+
+@app.route('/favorite/planet/<int:planet_id>', methods=['DELETE'])
+def del_favorite_planet(planet_id):
+    
+    favorites = db.session.get(FavoritePlanets, planet_id)
+    try:
+        db.session.delete(favorites)
+        db.session.commit()
+
+        return "Planet DELETED from favorites", 201
+
+    except UnmappedInstanceError:
+        db.session.rollback()
+        return "Error. This planet is already DELETED", 401
 
 # this only runs if `$ python src/app.py` is executed
 if __name__ == '__main__':

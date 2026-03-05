@@ -89,7 +89,7 @@ class Planets(db.Model):
 class FavoriteCharacters(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     id_user: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    id_characters: Mapped[int] = mapped_column(ForeignKey("characters.id"), nullable=False)
+    id_characters: Mapped[int] = mapped_column(ForeignKey("characters.id"), nullable=False, unique=True)
     active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
 
     users: Mapped["Users"] = relationship(back_populates="favoritecharacters")
@@ -108,7 +108,7 @@ class FavoriteCharacters(db.Model):
 class FavoritePlanets(db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     id_user: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    id_planets: Mapped[int] = mapped_column(ForeignKey("planets.id"), nullable=False)
+    id_planets: Mapped[int] = mapped_column(ForeignKey("planets.id"), nullable=False, unique=True)
     active: Mapped[bool] = mapped_column(Boolean(), nullable=False)
 
     users: Mapped["Users"] = relationship(back_populates="favoriteplanets")
