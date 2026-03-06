@@ -80,12 +80,24 @@ def get_characters():
 
     return jsonify(all_characters), 200
 
+@app.route('/characters/<int:character_id>', methods=['GET'])
+def get_character(character_id):
+    character = db.session.get(Characters, character_id)
+
+    return jsonify(character.serialize()), 200
+
 @app.route('/planets', methods=['GET'])
 def get_planets():
     all_planets = db.session.execute(select(Planets)).scalars().all()
     all_planets= list(map(lambda x: x.serialize(), all_planets))
 
     return jsonify(all_planets), 200
+
+@app.route('/planets/<int:planet_id>', methods=['GET'])
+def get_planet(planet_id):
+    planet = db.session.get(Planets, planet_id)
+
+    return jsonify(planet.serialize()), 200
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
 def add_favorite_planet(planet_id):
