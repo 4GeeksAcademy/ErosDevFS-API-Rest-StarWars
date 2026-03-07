@@ -82,9 +82,14 @@ def get_characters():
 
 @app.route('/characters/<int:character_id>', methods=['GET'])
 def get_character(character_id):
-    character = db.session.get(Characters, character_id)
-
-    return jsonify(character.serialize()), 200
+    error_response = {
+        "error": "This character doesn't exist",
+    }
+    try:
+        character = db.session.get(Characters, character_id)
+        return jsonify(character.serialize()), 200
+    except AttributeError:
+        return jsonify(error_response), 400
 
 @app.route('/planets', methods=['GET'])
 def get_planets():
@@ -95,9 +100,17 @@ def get_planets():
 
 @app.route('/planets/<int:planet_id>', methods=['GET'])
 def get_planet(planet_id):
-    planet = db.session.get(Planets, planet_id)
 
-    return jsonify(planet.serialize()), 200
+    error_response = {
+        "error": "This planet doesn't exist",
+    }
+
+    try:
+        planet = db.session.get(Planets, planet_id)
+        return jsonify(planet.serialize()), 200
+    except AttributeError:
+        return jsonify(error_response), 400
+    
 
 @app.route('/favorite/planet/<int:planet_id>', methods=['POST'])
 def add_favorite_planet(planet_id):
@@ -106,7 +119,7 @@ def add_favorite_planet(planet_id):
     try:
         db.session.add(planet)
         db.session.commit()
-
+    
         return "Planet ADDED to favorites", 201
 
     except IntegrityError:
